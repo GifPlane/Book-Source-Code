@@ -1,0 +1,8 @@
+#ignore this file#
+*.opensdf
+/ComputerSystem/Debug/
+/Debug/
+*.suo
+*.sdf
+*.vcxproj
+*.filters
