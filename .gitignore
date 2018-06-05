@@ -1,7 +1,5 @@
 #ignore this file#
 *.opensdf
-/ComputerSystem/Debug/
-/Debug/
 *.suo
 *.sdf
 *.vcxproj
@@ -9,6 +7,8 @@
 *.config
 *.csproj
 
+/Debug/
+/ComputerSystem/Debug/
 /Microsoft Visual C# 2013 step by step/bin
 /Microsoft Visual C# 2013 step by step/obj
 /Microsoft Visual C# 2013 step by step/Properties
