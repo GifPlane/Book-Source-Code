@@ -6,3 +6,9 @@
 *.sdf
 *.vcxproj
 *.filters
+*.config
+*.csproj
+
+/Visual-Cs-2013-Step-By-Step/bin
+/Visual-Cs-2013-Step-By-Step/obj
+/Visual-Cs-2013-Step-By-Step/Properties

@@ -18,6 +18,10 @@ void show_float(float x) {
 	show_bytes((byte_pointer)&x, sizeof(float));
 }
 
+void show_char(float x) {
+	show_bytes((byte_pointer)&x, sizeof(char));
+}
+
 void show_pointer(void *x) {
 	show_bytes((byte_pointer)&x, sizeof(void *));
 }
@@ -25,10 +29,13 @@ void show_pointer(void *x) {
 void main() {
 	int ival = 12345;
 	float fval = (float)ival;
+	char cval = (char)ival;
 	int *pval = &ival;
+
 	show_int(ival);
 	show_float(fval);
 	show_pointer(pval);
+	show_char(cval);
 
 	system("pause");
 }
@@ -38,7 +45,7 @@ void main() {
 
 	原值：16进制 => 二进制
 	原始值		   内存内部存储的值
-	00 00 30 39 => 00000000  00000000  00110000  00111001  （一共是4个字节，表示一个数，记住这是正常顺序（大端法），当时在计算机内部顺序是不一样的）
+	00 00 30 39 => 00000000  00000000  00110000  00111001  （一共是4个字节，表示一个数，记住这是正常顺序（大端法），当在计算机内部顺序是不一样的）
 
 	————————————————————————————————————————————————————————————————————————————————
 	输出结果是： 
