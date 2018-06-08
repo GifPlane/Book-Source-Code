@@ -8,7 +8,7 @@
 *.csproj
 
 /Debug/
-/ComputerSystem/Debug/
-/Microsoft Visual Cs 2013 step by step/bin
-/Microsoft Visual Cs 2013 step by step/obj
-/Microsoft Visual Cs 2013 step by step/Properties
+/*/Debug/
+/*/bin
+/*/obj
+/*/Properties
