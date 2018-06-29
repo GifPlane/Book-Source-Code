@@ -22,12 +22,12 @@ var Matrix4 = function(opt_src) {
     }
     this.elements = d;
   } else {
-    this.elements = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+    this.elements = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);//默认创建单位矩阵
   }
 };
 
 /**
- * Set the identity matrix.
+ * 创建单位矩阵
  * @return this
  */
 Matrix4.prototype.setIdentity = function() {
@@ -445,7 +445,7 @@ Matrix4.prototype.scale = function(x, y, z) {
 };
 
 /**
- * Set the matrix for translation.
+ * 设置旋转矩阵
  * @param x The X value of a translation.
  * @param y The Y value of a translation.
  * @param z The Z value of a translation.
