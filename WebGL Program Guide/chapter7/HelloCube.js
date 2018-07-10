@@ -2,10 +2,10 @@
 var VSHADER_SOURCE = 
 	'attribute vec4 a_Position;\n' + 
 	'attribute vec4 a_Color;\n' +
-	'uniform mat4 u_ProjMatrix;\n' +
+	'uniform mat4 u_MvpMatrix;\n' +
 	'varying vec4 v_Color;\n' +
 	'void main() {\n' + 
-	'	gl_Position = u_ProjMatrix * a_Position;\n' + 
+	'	gl_Position = u_MvpMatrix * a_Position;\n' + 
 	'	v_Color = a_Color;\n' +
 	'}\n';
 
@@ -18,7 +18,6 @@ var FSHADER_SOURCE =
 
 function main(){
 	var canvas = document.getElementById('canvas');
-	var nf = document.getElementById('nearfar');
 	var gl = getWebGLContext(canvas);
 
 	if(!gl) {
@@ -39,19 +38,23 @@ function main(){
 	}
 	//指定渲染背景色
 	gl.clearColor(0.0,0.0,0.0,1.0);
+	gl.enable(gl.DEPTH_TEST);
 
-	var u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
-	if (!u_ProjMatrix) { 
-    	console.log('Failed to get the storage locations or u_ProjMatrix');
+	var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+	if (!u_MvpMatrix) { 
+    	console.log('Failed to get the storage locations or u_MvpMatrix');
     	return;
   	}
   	//指定视图矩阵
-	var projMatrix = new Matrix4();
-	//注册键盘事件
-	document.onkeydown = function(ev){keydown(ev, gl, n, u_ProjMatrix ,projMatrix, nf);};
+	var mvpMatrix = new Matrix4();
 
-	draw(gl, n, u_ProjMatrix, projMatrix, nf);
+	mvpMatrix.setPerspective(30, 1, 1, 100);
+	mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+  	gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+	
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+	gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
 }
 
 /**
@@ -63,23 +66,38 @@ function main(){
 * 5、开启attribute变量
 */
 function initVertexBuffers(gl){
-  var verticesColors = new Float32Array([
-    // Vertex coordinates and color(RGBA)
-     0.0,  0.5,  -0.4,  0.4,  1.0,  0.4, // The back green one
-    -0.5, -0.5,  -0.4,  0.4,  1.0,  0.4,
-     0.5, -0.5,  -0.4,  1.0,  0.4,  0.4, 
-   
-     0.5,  0.4,  -0.2,  1.0,  0.4,  0.4, // The middle yellow one
-    -0.5,  0.4,  -0.2,  1.0,  1.0,  0.4,
-     0.0, -0.6,  -0.2,  1.0,  1.0,  0.4, 
+	  // Create a cube
+	  //    v6----- v5
+	  //   /|      /|
+	  //  v1------v0|
+	  //  | |     | |
+	  //  | |v7---|-|v4
+	  //  |/      |/
+	  //  v2------v3
+	var verticesColors = new Float32Array([
+	    // Vertex coordinates and color
+	     1.0,  1.0,  1.0,     1.0,  1.0,  1.0,  // v0 White
+	    -1.0,  1.0,  1.0,     1.0,  0.0,  1.0,  // v1 Magenta
+	    -1.0, -1.0,  1.0,     1.0,  0.0,  0.0,  // v2 Red
+	     1.0, -1.0,  1.0,     1.0,  1.0,  0.0,  // v3 Yellow
+	     1.0, -1.0, -1.0,     0.0,  1.0,  0.0,  // v4 Green
+	     1.0,  1.0, -1.0,     0.0,  1.0,  1.0,  // v5 Cyan
+	    -1.0,  1.0, -1.0,     0.0,  0.0,  1.0,  // v6 Blue
+	    -1.0, -1.0, -1.0,     0.0,  0.0,  0.0   // v7 Black
+  	]);
 
-     0.0,  0.5,   0.0,  0.4,  0.4,  1.0,  // The front blue one 
-    -0.5, -0.5,   0.0,  0.4,  0.4,  1.0,
-     0.5, -0.5,   0.0,  1.0,  0.4,  0.4, 
-  ]);
-  var n = 9;
+  	// Indices of the vertices
+	var indices = new Uint8Array([
+		0, 1, 2,   0, 2, 3,    // front
+		0, 3, 4,   0, 4, 5,    // right
+		0, 5, 6,   0, 6, 1,    // up
+		1, 6, 7,   1, 7, 2,    // left
+		7, 4, 3,   7, 3, 2,    // down
+		4, 7, 6,   4, 6, 5     // back
+	]);
 
 	var vertexColorBuffer = gl.createBuffer();
+	var indexBuffer = gl.createBuffer();
 	if(!vertexColorBuffer){
 		console.log('Failed to create the buffer object');
 		return -1;
@@ -107,31 +125,8 @@ function initVertexBuffers(gl){
 	gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
 	gl.enableVertexAttribArray(a_Color);
 
-	return n;
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+	return indices.length;
 }
-
-var g_near = 0.0, g_far = 0.5;//视点
-function keydown(ev, gl, n, u_ProjMatrix, projMatrix, nf){
-	switch(ev.keyCode){
-		case 39: g_near += 0.01;break; //right
-		case 37: g_near -= 0.01;break;//left
-		case 38: g_far += 0.01;break;//up
-		case 40: g_far -= 0.01;break; //down
-		default: break;
-	}
-
-	draw(gl, n, u_ProjMatrix, projMatrix, nf);
-}
-
-function draw(gl, n, u_ProjMatrix, projMatrix, nf){
-
-	projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, g_near, g_far);
-
-	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
-
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	nf.innerHTML = 'near: ' + Math.round(g_near * 100)/100 + ', far: ' + Math.round(g_far * 100)/100;
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-

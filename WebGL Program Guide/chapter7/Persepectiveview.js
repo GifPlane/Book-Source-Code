@@ -2,10 +2,11 @@
 var VSHADER_SOURCE = 
 	'attribute vec4 a_Position;\n' + 
 	'attribute vec4 a_Color;\n' +
+	'uniform mat4 u_ViewMatrix;\n' +
 	'uniform mat4 u_ProjMatrix;\n' +
 	'varying vec4 v_Color;\n' +
 	'void main() {\n' + 
-	'	gl_Position = u_ProjMatrix * a_Position;\n' + 
+	'	gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;\n' + 
 	'	v_Color = a_Color;\n' +
 	'}\n';
 
@@ -41,16 +42,23 @@ function main(){
 	gl.clearColor(0.0,0.0,0.0,1.0);
 
 	var u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
+	var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
 	if (!u_ProjMatrix) { 
     	console.log('Failed to get the storage locations or u_ProjMatrix');
     	return;
   	}
   	//指定视图矩阵
 	var projMatrix = new Matrix4();
-	//注册键盘事件
-	document.onkeydown = function(ev){keydown(ev, gl, n, u_ProjMatrix ,projMatrix, nf);};
+	var viewMatrix = new Matrix4();
 
-	draw(gl, n, u_ProjMatrix, projMatrix, nf);
+	viewMatrix.setLookAt(0, 0, 5, 0, 0, -100, 0, 1, 0);
+	projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+  	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
+	
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	gl.drawArrays(gl.TRIANGLES, 0, n);
 
 }
 
@@ -63,21 +71,34 @@ function main(){
 * 5、开启attribute变量
 */
 function initVertexBuffers(gl){
-  var verticesColors = new Float32Array([
-    // Vertex coordinates and color(RGBA)
-     0.0,  0.5,  -0.4,  0.4,  1.0,  0.4, // The back green one
-    -0.5, -0.5,  -0.4,  0.4,  1.0,  0.4,
-     0.5, -0.5,  -0.4,  1.0,  0.4,  0.4, 
-   
-     0.5,  0.4,  -0.2,  1.0,  0.4,  0.4, // The middle yellow one
-    -0.5,  0.4,  -0.2,  1.0,  1.0,  0.4,
-     0.0, -0.6,  -0.2,  1.0,  1.0,  0.4, 
+	var verticesColors = new Float32Array([
+		// Three triangles on the right side
+		0.75,  1.0,  0.4,  0.4,  1.0,  0.4, // The back green one
+		0.25, -1.0,  0.4,  0.4,  1.0,  0.4,
+		1.25, -1.0,  0.4,  1.0,  0.4,  0.4, 
 
-     0.0,  0.5,   0.0,  0.4,  0.4,  1.0,  // The front blue one 
-    -0.5, -0.5,   0.0,  0.4,  0.4,  1.0,
-     0.5, -0.5,   0.0,  1.0,  0.4,  0.4, 
-  ]);
-  var n = 9;
+		0.75,  1.0,  -2.0,  1.0,  1.0,  0.4, // The middle yellow one
+		0.25, -1.0,  -2.0,  1.0,  1.0,  0.4,
+		1.25, -1.0,  -2.0,  1.0,  0.4,  0.4, 
+
+		0.75,  1.0,   0.0,  0.4,  0.4,  1.0,  // The front blue one 
+		0.25, -1.0,   0.0,  0.4,  0.4,  1.0,
+		1.25, -1.0,   0.0,  1.0,  0.4,  0.4, 
+
+		// Three triangles on the left side
+		-0.75,  1.0,  -4.0,  0.4,  1.0,  0.4, // The back green one
+		-1.25, -1.0,  -4.0,  0.4,  1.0,  0.4,
+		-0.25, -1.0,  -4.0,  1.0,  0.4,  0.4, 
+
+		-0.75,  1.0,  -2.0,  1.0,  1.0,  0.4, // The middle yellow one
+		-1.25, -1.0,  -2.0,  1.0,  1.0,  0.4,
+		-0.25, -1.0,  -2.0,  1.0,  0.4,  0.4, 
+
+		-0.75,  1.0,   0.0,  0.4,  0.4,  1.0,  // The front blue one 
+		-1.25, -1.0,   0.0,  0.4,  0.4,  1.0,
+		-0.25, -1.0,   0.0,  1.0,  0.4,  0.4, 
+	]);
+	var n = 18; // Three vertices per triangle * 6
 
 	var vertexColorBuffer = gl.createBuffer();
 	if(!vertexColorBuffer){
@@ -109,29 +130,3 @@ function initVertexBuffers(gl){
 
 	return n;
 }
-
-var g_near = 0.0, g_far = 0.5;//视点
-function keydown(ev, gl, n, u_ProjMatrix, projMatrix, nf){
-	switch(ev.keyCode){
-		case 39: g_near += 0.01;break; //right
-		case 37: g_near -= 0.01;break;//left
-		case 38: g_far += 0.01;break;//up
-		case 40: g_far -= 0.01;break; //down
-		default: break;
-	}
-
-	draw(gl, n, u_ProjMatrix, projMatrix, nf);
-}
-
-function draw(gl, n, u_ProjMatrix, projMatrix, nf){
-
-	projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, g_near, g_far);
-
-	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
-
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	nf.innerHTML = 'near: ' + Math.round(g_near * 100)/100 + ', far: ' + Math.round(g_far * 100)/100;
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-
